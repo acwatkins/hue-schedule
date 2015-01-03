@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import datetime
+import logging
 import pytz
 import time
 
@@ -83,34 +84,36 @@ class Schedule(object):
 	def registerLightSetting(self, name, setting):
 		self.lightProperties[name] = setting
 
-	def addEvent(self, hour, minute, second, name, settingName, transitionTimeInSeconds, lightOn = None):
-		self.addGroupEvent(hour, minute, second, [ name ], settingName, transitionTimeInSeconds, lightOn)
+	def addEvent(self, hour, minute, second, name, settingName, transitionTimeInDeciseconds, lightOn = None):
+		self.addGroupEvent(hour, minute, second, [name], settingName, transitionTimeInDeciseconds, lightOn)
 
-	def addGroupEvent(self, hour, minute, second, names, settingName, transitionTimeInSeconds, lightOn = None):
+	def addGroupEvent(self, hour, minute, second, names, settingName, transitionTimeInDeciseconds, lightOn = None):
 		localTime = self.getLocalDateTime(hour, minute, second)
-		config = self.getLightConfiguration(settingName, transitionTimeInSeconds, lightOn)
-		print(str(config))
+		config = self.getLightConfiguration(settingName, transitionTimeInDeciseconds, lightOn)
+		logging.info(localTime.strftime("(%Y-%m-%d %H:%M:%S)") + " Adding event: " + settingName)
+		logging.info("Lights: " + str(names))
+		logging.debug("Configuration: " + str(config))
 		for name in names:
 			self.bridge.create_schedule(settingName, self.getUtcTimeString(localTime), self.bridge.get_light_id_by_name(name), config, settingName)
 		self.lastEventTimeUsed = localTime
 
-	def addEventByOffsetToLast(self, secondsSinceLastEvent, name, settingName, transitionTimeInSeconds, lightOn = None):
-		self.addGroupEventByOffsetToLast(secondsSinceLastEvent, [name], settingName, transitionTimeInSeconds, lightOn)
+	def addEventByOffsetToLast(self, lastEventInDeciseconds, name, settingName, transitionTimeInDeciseconds, lightOn = None):
+		self.addGroupEventByOffsetToLast(lastEventInDeciseconds, [name], settingName, transitionTimeInDeciseconds, lightOn)
 
-	def addGroupEventByOffsetToLast(self, secondsSinceLastEvent, names, settingName, transitionTimeInSeconds, lightOn = None):
+	def addGroupEventByOffsetToLast(self, lastEventInDeciseconds, names, settingName, transitionTimeInDeciseconds, lightOn = None):
 		if (self.lastEventTimeUsed != None):
-			self.lastEventTimeUsed += datetime.timedelta(seconds = secondsSinceLastEvent)
-			self.addGroupEvent(self.lastEventTimeUsed.hour, self.lastEventTimeUsed.minute, self.lastEventTimeUsed.second, names, settingName, transitionTimeInSeconds, lightOn)
+			self.lastEventTimeUsed += datetime.timedelta(seconds = lastEventInDeciseconds / 10)
+			self.addGroupEvent(self.lastEventTimeUsed.hour, self.lastEventTimeUsed.minute, self.lastEventTimeUsed.second, names, settingName, transitionTimeInDeciseconds, lightOn)
 		else:
-			print("Error, called addEventByOffsetToLast without adding an initial event")
+			logging.error("Error, called addEventByOffsetToLast without adding an initial event")
 
-	def getLightConfiguration(self, settingName, transitionTimeInSeconds, lightOn):
+	def getLightConfiguration(self, settingName, transitionTimeInDeciseconds, lightOn):
 		lightProperties = self.lightProperties[settingName]
 		config = lightProperties.getConfig()
 		if (lightOn != None):
 			config['on'] = lightOn
 
-		config['transitiontime'] = transitionTimeInSeconds * 10
+		config['transitionTimeInDeciseconds'] = transitionTimeInDeciseconds
 
 		return config
 
