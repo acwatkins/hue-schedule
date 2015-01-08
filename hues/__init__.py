@@ -84,18 +84,17 @@ class Schedule(object):
 	def registerLightSetting(self, name, setting):
 		self.lightProperties[name] = setting
 
-	def addEvent(self, hour, minute, second, name, settingName, transitionTimeInDeciseconds, lightOn = None):
-		self.addGroupEvent(hour, minute, second, [name], settingName, transitionTimeInDeciseconds, lightOn)
+	def addEvent(self, eventDateTime, name, settingName, transitionTimeInDeciseconds, lightOn = None):
+		self.addGroupEvent(eventDateTime, [name], settingName, transitionTimeInDeciseconds, lightOn)
 
-	def addGroupEvent(self, hour, minute, second, names, settingName, transitionTimeInDeciseconds, lightOn = None):
-		localTime = self.getLocalDateTime(hour, minute, second)
+	def addGroupEvent(self, eventDateTime, names, settingName, transitionTimeInDeciseconds, lightOn = None):
 		config = self.getLightConfiguration(settingName, transitionTimeInDeciseconds, lightOn)
-		logging.info(localTime.strftime("(%Y-%m-%d %H:%M:%S)") + " Adding event: " + settingName)
+		logging.info(eventDateTime.strftime("(%Y-%m-%d %H:%M:%S)") + " Adding event: " + settingName)
 		logging.info("Lights: " + str(names))
 		logging.debug("Configuration: " + str(config))
 		for name in names:
-			self.bridge.create_schedule(settingName, self.getUtcTimeString(localTime), self.bridge.get_light_id_by_name(name), config, settingName)
-		self.lastEventTimeUsed = localTime
+			self.bridge.create_schedule(settingName, self.getUtcTimeString(eventDateTime), self.bridge.get_light_id_by_name(name), config, settingName)
+		self.lastEventTimeUsed = eventDateTime
 
 	def addEventByOffsetToLast(self, lastEventInDeciseconds, name, settingName, transitionTimeInDeciseconds, lightOn = None):
 		self.addGroupEventByOffsetToLast(lastEventInDeciseconds, [name], settingName, transitionTimeInDeciseconds, lightOn)
@@ -103,7 +102,7 @@ class Schedule(object):
 	def addGroupEventByOffsetToLast(self, lastEventInDeciseconds, names, settingName, transitionTimeInDeciseconds, lightOn = None):
 		if (self.lastEventTimeUsed != None):
 			self.lastEventTimeUsed += datetime.timedelta(seconds = lastEventInDeciseconds / 10)
-			self.addGroupEvent(self.lastEventTimeUsed.hour, self.lastEventTimeUsed.minute, self.lastEventTimeUsed.second, names, settingName, transitionTimeInDeciseconds, lightOn)
+			self.addGroupEvent(self.lastEventTimeUsed, names, settingName, transitionTimeInDeciseconds, lightOn)
 		else:
 			logging.error("Error, called addEventByOffsetToLast without adding an initial event")
 
@@ -113,7 +112,7 @@ class Schedule(object):
 		if (lightOn != None):
 			config['on'] = lightOn
 
-		config['transitionTimeInDeciseconds'] = transitionTimeInDeciseconds
+		config['transitiontime'] = transitionTimeInDeciseconds
 
 		return config
 
