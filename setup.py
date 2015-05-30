@@ -9,5 +9,5 @@ setup(name='hues',
       author='Adam Watkins',
       author_email='acwatkins@gmail.com',
       license='GPL3',
-      packages=['hues'],
-      zip_safe=False)
+      modules=['hues'],
+      install_requires = ['phue>=0.8'])
