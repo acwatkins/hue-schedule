@@ -10,4 +10,4 @@ setup(name='hues',
       author_email='acwatkins@gmail.com',
       license='GPL3',
       packages=['hues'],
-      install_requires = ['phue>=0.8'])
+      install_requires = ['phue>=0.8','pytz'])
