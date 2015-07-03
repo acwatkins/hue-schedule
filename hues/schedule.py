@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import collections
 import datetime
 import hues.light
 import logging
@@ -72,25 +73,46 @@ class Schedule(object):
 	def registerLightSetting(self, name, setting):
 		self.lightProperties[name] = setting
 
-	def addEvent(self, eventDateTime, name, settingName, transitionTimeInDeciseconds, lightOn = None):
-		self.addGroupEvent(eventDateTime, [name], settingName, transitionTimeInDeciseconds, lightOn)
+	def addEvent(self, beginDateTime, names, settingNames, transitionTimeInDeciseconds = None, endDateTime = None, lightOn = None):
+		if isinstance(names, str):
+			names = [names]
+		if isinstance(settingNames, str):
+			settingNames = [settingNames]
 
-	def addGroupEvent(self, eventDateTime, names, settingName, transitionTimeInDeciseconds, lightOn = None):
-		config = self.getLightConfiguration(settingName, transitionTimeInDeciseconds, lightOn)
-		logging.info(eventDateTime.strftime("(%Y-%m-%d %H:%M:%S)") + " Adding event: " + settingName)
+		if (transitionTimeInDeciseconds == None and endDateTime == None):
+			logging.error("addEvent: Must either specify transition time or end date time")
+			return
+		logging.info("------------------------------------------------------------------")
+		eventDateTime = beginDateTime
+		logging.info(eventDateTime.strftime("(%Y-%m-%d %H:%M:%S)") + " Adding event: " + str(settingNames))
 		logging.info("Lights: " + str(names))
-		logging.debug("Configuration: " + str(config))
-		for name in names:
-			self.bridge.create_schedule(settingName, self.getUtcTimeString(eventDateTime), self.bridge.get_light_id_by_name(name), config, settingName)
+
+		durationBetweenEventsInDeciseconds = transitionTimeInDeciseconds
+		if (endDateTime != None):
+			deltaDateTime = endDateTime - beginDateTime
+			deltaDateTimeInSeconds = deltaDateTime / datetime.timedelta(seconds = 1)
+
+			secondsPerTransition = int(deltaDateTimeInSeconds / len(settingNames))
+			durationBetweenEventsInDeciseconds = secondsPerTransition * 10
+			transitionTimeInDeciseconds = (secondsPerTransition - 1) * 10
+
+			logging.info("deltaTime: " + str(deltaDateTime))
+			logging.info("minutesPerTransition: " + str(secondsPerTransition / 60))
+		elif (transitionTimeInDeciseconds != None and len(settingNames) > 1):
+			durationBetweenEventsInDeciseconds /= len(settingNames)
+			transitionTimeInDeciseconds = durationBetweenEventsInDeciseconds - 10
+
+		for settingName in settingNames:
+			for name in names:
+				config = self.getLightConfiguration(settingName, transitionTimeInDeciseconds, lightOn)
+				self.bridge.create_schedule(settingName, self.getUtcTimeString(eventDateTime), self.bridge.get_light_id_by_name(name), config, settingName)
+			eventDateTime += datetime.timedelta(seconds=durationBetweenEventsInDeciseconds / 10)
 		self.lastEventTimeUsed = eventDateTime
 
-	def addEventByOffsetToLast(self, lastEventInDeciseconds, name, settingName, transitionTimeInDeciseconds, lightOn = None):
-		self.addGroupEventByOffsetToLast(lastEventInDeciseconds, [name], settingName, transitionTimeInDeciseconds, lightOn)
-
-	def addGroupEventByOffsetToLast(self, lastEventInDeciseconds, names, settingName, transitionTimeInDeciseconds, lightOn = None):
+	def addEventByOffsetToLast(self, lastEventInDeciseconds, names, settingName, transitionTimeInDeciseconds, lightOn = None):
 		if self.lastEventTimeUsed is not None:
 			self.lastEventTimeUsed += datetime.timedelta(seconds=lastEventInDeciseconds / 10)
-			self.addGroupEvent(self.lastEventTimeUsed, names, settingName, transitionTimeInDeciseconds, lightOn)
+			self.addEvent(self.lastEventTimeUsed, names, settingName, transitionTimeInDeciseconds, lightOn)
 		else:
 			logging.error("Error, called addEventByOffsetToLast without adding an initial event")
 
