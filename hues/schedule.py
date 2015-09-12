@@ -45,7 +45,7 @@ class Schedule(object):
 		relax.colorTemperature = 467
 
 		yellowSun = hues.light.LightProperties()
-		yellowSun.brightness = 150
+		yellowSun.brightness = 125
 		yellowSun.hue = 7826
 		yellowSun.saturation = 250
 
@@ -55,9 +55,14 @@ class Schedule(object):
 		white.saturation = 0
 
 		orangeLow = hues.light.LightProperties()
-		orangeLow.brightness = 1
+		orangeLow.brightness = 75
 		orangeLow.hue = 2912
 		orangeLow.saturation = 254
+
+		redLowest = hues.light.LightProperties()
+		redLowest.brightness = 0
+		redLowest.hue = 0
+		redLowest.saturation = 254
 
 		self.lightProperties = {}
 		self.lightProperties['energize'] = energize
@@ -66,6 +71,7 @@ class Schedule(object):
 		self.lightProperties['relax'] = relax
 		self.lightProperties['yellowSun'] = yellowSun
 		self.lightProperties['orangeLow'] = orangeLow
+		self.lightProperties['redLowest'] = redLowest
 		self.lightProperties['white'] = white
 		
 		self.lastEventTimeUsed = None
