@@ -1,0 +1,6 @@
+runtests:
+  script:
+    - py.test
+  tags:
+    - pytest
+    - python3
