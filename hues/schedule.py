@@ -125,8 +125,7 @@ class Schedule(object):
 	def getLightConfiguration(self, settingName, transitionTimeInDeciseconds, lightOn):
 		lightProperties = self.lightProperties[settingName]
 		config = lightProperties.getConfig()
-		if lightOn is not None:
-			config['on'] = lightOn
+		config['on'] = lightOn
 
 		config['transitiontime'] = transitionTimeInDeciseconds
 
