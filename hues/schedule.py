@@ -110,8 +110,9 @@ class Schedule(object):
 
 		for settingName in settingNames:
 			for name in names:
-				config = self.getLightConfiguration(settingName, transitionTimeInDeciseconds, lightOn)
-				self.bridge.create_schedule(settingName, self.getUtcTimeString(eventDateTime), self.bridge.get_light_id_by_name(name), config, settingName)
+				if (self.bridge.get_light(self.bridge.get_light_id_by_name(name), 'on') == True or lightOn != None):
+					config = self.getLightConfiguration(settingName, transitionTimeInDeciseconds, lightOn)
+					self.bridge.create_schedule(settingName, self.getUtcTimeString(eventDateTime), self.bridge.get_light_id_by_name(name), config, settingName)
 			eventDateTime += datetime.timedelta(seconds=durationBetweenEventsInDeciseconds / 10)
 		self.lastEventTimeUsed = eventDateTime
 
