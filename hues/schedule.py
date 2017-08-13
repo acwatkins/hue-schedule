@@ -132,5 +132,5 @@ class Schedule(object):
 		return config
 
 	def getUtcTimeString(self, dateTime):
-		utcDateTime = dateTime.astimezone(pytz.utc)
-		return utcDateTime.strftime("%Y-%m-%dT%H:%M:%S")
+		#utcDateTime = dateTime.astimezone(pytz.utc)
+		return dateTime.strftime("%Y-%m-%dT%H:%M:%S")
